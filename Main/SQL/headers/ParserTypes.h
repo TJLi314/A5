@@ -246,6 +246,34 @@ public:
 
 		return 0;
 	}
+
+    string checkValuesToSelect(map <string, MyDB_TablePtr> &allTables) {
+        for (ExprTreePtr expr : valuesToSelect) {
+            if (expr->typeCheck(allTables, tablesToProcess) == errType) {
+                return "Semantic error in expression: " + expr->toString();
+            }
+        }
+        return "";
+    }
+
+    string checkAllDisjunctions(map <string, MyDB_TablePtr> &allTables) {
+        for (ExprTreePtr expr : allDisjunctions) {
+            if (expr->typeCheck(allTables, tablesToProcess) == errType) {
+                return "Semantic error in expression: " + expr->toString();
+            }
+        }
+        return "";
+    }
+
+    string checkGroupingClauses(map <string, MyDB_TablePtr> &allTables) {
+        for (ExprTreePtr expr : groupingClauses) {
+            if (expr->typeCheck(allTables, tablesToProcess) == errType) {
+                return "Semantic error in expression: " + expr->toString();
+            }
+        }
+        return "";
+    }
+
 	
 	~SFWQuery () {}
 
@@ -316,6 +344,24 @@ public:
 	int checkTablesExist(map <string, MyDB_TablePtr> &allTables) {
 		return myQuery.checkTablesExist(allTables);
 	}
+
+    string checkSemantics(map <string, MyDB_TablePtr> &allTables) {
+        // Check that all identifiers in valuesToSelect, allDisjunctions, groupingClauses are valid
+        // i.e., the table aliases exist and the attributes exist in the corresponding tables
+        string msg = myQuery.checkValuesToSelect(allTables);
+        if (msg != "") {
+            return msg;
+        }
+        msg = myQuery.checkAllDisjunctions(allTables);
+        if (msg != "") {
+            return msg;
+        }
+        msg = myQuery.checkGroupingClauses(allTables);
+        if (msg != "") {
+            return msg;
+        }
+        return "Semantic check passed.";
+    }
 
 	#include "FriendDecls.h"
 };

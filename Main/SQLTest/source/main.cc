@@ -126,13 +126,6 @@ int main (int numArgs, char **args) {
 				const int parseFailed { yyparse (scanner, &final) };
 				yy_delete_buffer (buffer, scanner);
 				yylex_destroy (scanner);
-
-				// Semantic checking on SQLStatement
-				int semanticsFailed = final->checkTablesExist(allTables);
-				if (semanticsFailed == -1) {
-					break;
-				}
-
 				// if we did not parse correctly
 				if (parseFailed) {
 
@@ -167,6 +160,12 @@ int main (int numArgs, char **args) {
 
 					} else if (final->isSFWQuery ()) {
 
+                        // Semantic checking on SQLStatement
+                        int semanticsFailed = final->checkTablesExist(allTables);
+                        if (semanticsFailed == -1) {
+                            break;
+                        }
+                        string msg = final->checkSemantics(allTables);
 						// print it out
 						final->printSFWQuery ();
 					}
