@@ -346,13 +346,13 @@ public:
     int checkSemantics(map <string, MyDB_TablePtr> &allTables) {
         // Check that all identifiers in valuesToSelect, allDisjunctions, groupingClauses are valid
         // i.e., the table aliases exist and the attributes exist in the corresponding tables
-        if (myQuery.checkValuesToSelect(allTables)) {
+        if (myQuery.checkValuesToSelect(allTables) == -1) {
             return -1;
         }
-        if (myQuery.checkAllDisjunctions(allTables)) {
+        if (myQuery.checkAllDisjunctions(allTables) == -1) {
             return -1;
         }
-        if (myQuery.checkGroupingClauses(allTables)) {
+        if (myQuery.checkGroupingClauses(allTables) == -1) {
             return -1;
         }
         return 0;
