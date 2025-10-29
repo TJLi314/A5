@@ -15,6 +15,17 @@ typedef shared_ptr <ExprTree> ExprTreePtr;
 
 enum ReturnType { stringType, intType, doubleType, boolType, errType };
 
+inline std::string typeToString(ReturnType t) {
+	switch (t) {
+		case intType: return "int";
+		case doubleType: return "double";
+		case stringType: return "string";
+		case boolType: return "bool";
+		case errType: return "error";
+	}
+	return "unknown";
+}
+
 // this class encapsules a parsed SQL expression (such as "this.that > 34.5 AND 4 = 5")
 
 // class ExprTree is a pure virtual class... the various classes that implement it are below
@@ -143,14 +154,14 @@ public:
 		}
 
 		if (!foundAlias) {
-			cout << "ERROR: Table alias '" << tableName << "' not found in query." << endl;
+			cout << "ERROR: Table alias '" << tableName << "' not found in query" << endl;
 			return errType;
     	}
 
 		// look up the table name in allTables, and use that to look up the type of attName
 		auto tableIt = allTables.find(actualTableName);
 		if (tableIt == allTables.end()) {
-			cout << "ERROR: Table '" << actualTableName << "' not found in catalog." << endl;
+			cout << "ERROR: Table '" << actualTableName << "' not found in catalog" << endl;
 			return errType;
 		}
 
@@ -161,7 +172,7 @@ public:
 		pair<int, MyDB_AttTypePtr> attInfo = schema->getAttByName(attName);
 		if (attInfo.first == -1) {
 			cout << "ERROR: Attribute '" << attName << "' not found in table '" 
-				<< actualTableName << "'." << endl;
+				<< actualTableName << endl;
 			return errType;
 		}
 
@@ -207,12 +218,12 @@ public:
 			return errType;
 
 		if (leftType == stringType || rightType == stringType) {
-			cout << "ERROR: Cannot subtract string values." << endl;
+			cout << "ERROR: Cannot subtract string values" << endl;
 			return errType;
 		}
 
 		if (leftType == boolType || rightType == boolType) {
-			cout << "ERROR: Cannot subtract bool values." << endl;
+			cout << "ERROR: Cannot subtract bool values" << endl;
 			return errType;
 		}
 
@@ -255,7 +266,7 @@ public:
 			return stringType;
 	
 		if (leftType == boolType || rightType == boolType) {
-			cout << "ERROR: Cannot add bool values." << endl;
+			cout << "ERROR: Cannot add bool values" << endl;
 			return errType;
 		}
 
@@ -294,12 +305,12 @@ public:
 			return errType;
 
 		if (leftType == stringType || rightType == stringType) {
-			cout << "ERROR: Cannot multiply string values." << endl;
+			cout << "ERROR: Cannot multiply string values" << endl;
 			return errType;
 		}
 
 		if (leftType == boolType || rightType == boolType) {
-			cout << "ERROR: Cannot multiply bool values." << endl;
+			cout << "ERROR: Cannot multiply bool values" << endl;
 			return errType;
 		}
 
@@ -338,12 +349,12 @@ public:
 			return errType;
 
 		if (leftType == stringType || rightType == stringType) {
-			cout << "ERROR: Cannot divide string values." << endl;
+			cout << "ERROR: Cannot divide string values" << endl;
 			return errType;
 		}
 
 		if (leftType == boolType || rightType == boolType) {
-			cout << "ERROR: Cannot divide bool values." << endl;
+			cout << "ERROR: Cannot divide bool values" << endl;
 			return errType;
 		}
 
@@ -383,7 +394,7 @@ public:
 		if (leftType == stringType || rightType == stringType) {
 			if (leftType != rightType) {
 				cout << "ERROR: Cannot compare incompatible types: "
-					<< "left=" << leftType << ", right=" << rightType << endl;
+					<< "left=" << typeToString(leftType) << ", right=" << typeToString(rightType) << endl;
 				return errType;
 			}
 
@@ -398,7 +409,7 @@ public:
 
 		// Anything else is invalid (e.g., bool)
 		cout << "ERROR: Cannot compare incompatible types: "
-			<< "left=" << leftType << ", right=" << rightType << endl;
+			<< "left=" << typeToString(leftType) << ", right=" << typeToString(rightType) << endl;
 		return errType;
 	}
 
@@ -435,7 +446,7 @@ public:
 		if (leftType == stringType || rightType == stringType) {
 			if (leftType != rightType) {
 				cout << "ERROR: Cannot compare incompatible types: "
-					<< "left=" << leftType << ", right=" << rightType << endl;
+					<< "left=" << typeToString(leftType) << ", right=" << typeToString(rightType) << endl;
 				return errType;
 			}
 
@@ -450,7 +461,7 @@ public:
 
 		// Anything else is invalid (e.g., bool)
 		cout << "ERROR: Cannot compare incompatible types: "
-			<< "left=" << leftType << ", right=" << rightType << endl;
+			<< "left=" << typeToString(leftType) << ", right=" << typeToString(rightType) << endl;
 		return errType;
 	}
 
@@ -487,7 +498,7 @@ public:
 		if (leftType == stringType || rightType == stringType) {
 			if (leftType != rightType) {
 				cout << "ERROR: Cannot compare incompatible types: "
-					<< "left=" << leftType << ", right=" << rightType << endl;
+					<< typeToString(leftType) << ", right=" << typeToString(rightType) << endl;
 				return errType;
 			}
 
@@ -502,7 +513,7 @@ public:
 
 		// Anything else is invalid (e.g., bool)
 		cout << "ERROR: Cannot compare incompatible types: "
-			<< "left=" << leftType << ", right=" << rightType << endl;
+			<< "left=" << typeToString(leftType) << ", right=" << typeToString(rightType) << endl;
 		return errType;
 	}
 
@@ -535,7 +546,7 @@ public:
         	return errType;
 
 		if (leftType != boolType || rightType != boolType) {
-        	cout << "ERROR: OR operator requires boolean operands, but got " << leftType << " and " << rightType << "." << endl;
+        	cout << "ERROR: OR operator requires boolean operands, but got " << typeToString(leftType) << " and " << typeToString(rightType) << "." << endl;
         	return errType;
     	}
 
@@ -575,7 +586,7 @@ public:
 		if (leftType == stringType || rightType == stringType) {
 			if (leftType != rightType) {
 				cout << "ERROR: Cannot compare incompatible types: "
-					<< "left=" << leftType << ", right=" << rightType << endl;
+					<< "left=" << typeToString(leftType) << ", right=" << typeToString(rightType) << endl;
 				return errType;
 			}
 
@@ -590,7 +601,7 @@ public:
 
 		// Anything else is invalid (e.g., bool)
 		cout << "ERROR: Cannot compare incompatible types: "
-			<< "left=" << leftType << ", right=" << rightType << endl;
+			<< "left=" << typeToString(leftType) << ", right=" << typeToString(rightType) << endl;
 		return errType;
 	}
 
@@ -622,7 +633,7 @@ public:
         // Must be boolean
         if (childType != boolType) {
             cout << "ERROR: NOT operator requires a boolean expression, but got type "
-                 << childType << endl;
+                 << typeToString(childType) << endl;
             return errType;
         }
 
