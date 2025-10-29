@@ -38,6 +38,10 @@ public:
         vector<std::pair<std::string, std::string>> &tablesToProcess
     ) = 0;
 	virtual ~ExprTree () {}
+
+    virtual vector<ExprTreePtr> getIdentifiers(map<std::string, MyDB_TablePtr> &allTables) {
+        return vector<ExprTreePtr>();
+    }
 };
 
 class BoolLiteral : public ExprTree {
@@ -193,6 +197,10 @@ public:
 		return "[" + tableName + "_" + attName + "]";
 	}	
 
+    vector<ExprTreePtr> getIdentifiers(map<std::string, MyDB_TablePtr> &allTables) override {
+        return vector<ExprTreePtr>{ make_shared<Identifier>(tableName, attName) };
+    }
+
 	~Identifier () {}
 };
 
@@ -232,6 +240,19 @@ public:
 
 		return doubleType;
 	}
+
+    vector<ExprTreePtr> getIdentifiers(map<std::string, MyDB_TablePtr> &allTables) override {
+        vector<ExprTreePtr> ids = vector<ExprTreePtr>();
+        vector<ExprTreePtr> leftIds = lhs->getIdentifiers(allTables);
+        vector<ExprTreePtr> rightIds = rhs->getIdentifiers(allTables);
+        for (auto id : leftIds) {
+            ids.push_back(id);
+        }
+        for (auto id : rightIds) {
+            ids.push_back(id);
+        }
+        return ids;
+    }
 
 	string toString () {
 		return "- (" + lhs->toString () + ", " + rhs->toString () + ")";
@@ -275,6 +296,20 @@ public:
 
 		return doubleType;
 	}
+
+
+    vector<ExprTreePtr> getIdentifiers(map<std::string, MyDB_TablePtr> &allTables) override {
+        vector<ExprTreePtr> ids = vector<ExprTreePtr>();
+        vector<ExprTreePtr> leftIds = lhs->getIdentifiers(allTables);
+        vector<ExprTreePtr> rightIds = rhs->getIdentifiers(allTables);
+        for (auto id : leftIds) {
+            ids.push_back(id);
+        }
+        for (auto id : rightIds) {
+            ids.push_back(id);
+        }
+        return ids;
+    }
 
 	string toString () {
 		return "+ (" + lhs->toString () + ", " + rhs->toString () + ")";
@@ -320,6 +355,20 @@ public:
 		return doubleType;
 	}
 
+
+    vector<ExprTreePtr> getIdentifiers(map<std::string, MyDB_TablePtr> &allTables) override {
+        vector<ExprTreePtr> ids = vector<ExprTreePtr>();
+        vector<ExprTreePtr> leftIds = lhs->getIdentifiers(allTables);
+        vector<ExprTreePtr> rightIds = rhs->getIdentifiers(allTables);
+        for (auto id : leftIds) {
+            ids.push_back(id);
+        }
+        for (auto id : rightIds) {
+            ids.push_back(id);
+        }
+        return ids;
+    }
+
 	string toString () {
 		return "* (" + lhs->toString () + ", " + rhs->toString () + ")";
 	}	
@@ -360,6 +409,20 @@ public:
 
 		return doubleType;
 	}
+
+
+    vector<ExprTreePtr> getIdentifiers(map<std::string, MyDB_TablePtr> &allTables) override {
+        vector<ExprTreePtr> ids = vector<ExprTreePtr>();
+        vector<ExprTreePtr> leftIds = lhs->getIdentifiers(allTables);
+        vector<ExprTreePtr> rightIds = rhs->getIdentifiers(allTables);
+        for (auto id : leftIds) {
+            ids.push_back(id);
+        }
+        for (auto id : rightIds) {
+            ids.push_back(id);
+        }
+        return ids;
+    }
 
 	string toString () {
 		return "/ (" + lhs->toString () + ", " + rhs->toString () + ")";

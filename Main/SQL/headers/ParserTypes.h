@@ -272,6 +272,42 @@ public:
         return 0;
     }
 
+    int checkValuesToSelectAgainstGroupings(map <string, MyDB_TablePtr> &allTables) {
+        vector<ExprTreePtr> selectIdentifiers = vector<ExprTreePtr>();
+        for (auto expr : valuesToSelect) {
+            vector<ExprTreePtr> ids = expr->getIdentifiers(allTables);
+            for (auto id : ids) {
+                selectIdentifiers.push_back(id);
+            }
+        }
+        cout << "successfully got select identifiers\n";
+        vector<ExprTreePtr> groupingIdentifiers = vector<ExprTreePtr>();
+        for (auto expr : groupingClauses) {
+            vector<ExprTreePtr> ids = expr->getIdentifiers(allTables);
+            for (auto id : ids) {
+                groupingIdentifiers.push_back(id);
+            }
+        }
+        cout << "successfully got grouping identifiers\n";
+
+        for (ExprTreePtr selectId : selectIdentifiers) {
+            bool found = false;
+            for (ExprTreePtr groupId : groupingIdentifiers) {
+                if (selectId->toString() == groupId->toString()) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                cout << "ERROR: Selected attribute " << selectId->toString() 
+                     << " is not in GROUP BY clause." << endl;
+                return -1;
+            }
+        }
+
+        return 0;
+    }
+
 	
 	~SFWQuery () {}
 
@@ -353,6 +389,10 @@ public:
             return -1;
         }
         if (myQuery.checkGroupingClauses(allTables) == -1) {
+            return -1;
+        }
+        cout << "All identifiers are valid.\n";
+        if (myQuery.checkValuesToSelectAgainstGroupings(allTables) == -1) {
             return -1;
         }
         return 0;
