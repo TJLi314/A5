@@ -1,0 +1,18 @@
+1 seems correct
+2 seems correct
+3 (l.l_extendedprice * (1 - l.l_discount) > "a string"); ERROR: Cannot compare doubles to strings
+4 SUM(l.l_returnflag + l.l_shipdate + l.l_commitdate) ERROR: cannot sum strings
+5 seems correct 
+6 AND (l.l_tax + l.l_discount > "date2" OR o.o_orderdate = "date1") ERROR: cannot compare double to string
+7 AND (l.l_orderkey = o.k_orderkey); ERROR: k_orderkey does not exist
+8 (c.c_custkey = h.o_custkey) ERROR: accessing nonexistent table "h"
+9 AND ("this is a string" + "this is another string" > 15.0 - "here is another") ERROR: cannot subtract string from double
+10 customers AS c, ERROR: customers does not exist
+11 seems correct
+12 seems correct
+13 SUM(c.l_extendedprice * 1.01) ERROR: attribute c.l_extendedprice does not exist
+14 seems correct
+15 AND (l.l_tax + l.l_discount + l.l_extendedprice > 3.27 OR 
+		l.l_discount + l.l_extendedprice > "327") ERROR: cannot compare double to string
+16 seems correct
+17 seems correct
