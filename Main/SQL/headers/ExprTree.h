@@ -3,13 +3,17 @@
 #define SQL_EXPRESSIONS
 
 #include "MyDB_AttType.h"
+#include "MyDB_Table.h"
 #include <string>
 #include <vector>
+#include <map>
 
 // create a smart pointer for database tables
 using namespace std;
 class ExprTree;
 typedef shared_ptr <ExprTree> ExprTreePtr;
+
+enum ReturnType { stringType, intType, doubleType, errType };
 
 // this class encapsules a parsed SQL expression (such as "this.that > 34.5 AND 4 = 5")
 
@@ -18,6 +22,10 @@ class ExprTree {
 
 public:
 	virtual string toString () = 0;
+	virtual ReturnType typeCheck (
+        map<std::string, MyDB_TablePtr> &allTables,
+        vector<std::pair<std::string, std::string>> &tablesToProcess
+    ) = 0;
 	virtual ~ExprTree () {}
 };
 
@@ -30,6 +38,11 @@ public:
 	BoolLiteral (bool fromMe) {
 		myVal = fromMe;
 	}
+
+	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
+        // Not sure if should treat this as interger;
+        return intType;
+    }
 
 	string toString () {
 		if (myVal) {
@@ -50,6 +63,10 @@ public:
 		myVal = fromMe;
 	}
 
+	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
+        return doubleType;
+    }
+
 	string toString () {
 		return "double[" + to_string (myVal) + "]";
 	}	
@@ -66,6 +83,10 @@ public:
 
 	IntLiteral (int fromMe) {
 		myVal = fromMe;
+	}
+
+	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
+		return intType;
 	}
 
 	string toString () {
@@ -86,6 +107,10 @@ public:
 		myVal = string (fromMe + 1);
 	}
 
+	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
+		return stringType;
+	}
+
 	string toString () {
 		return "string[" + myVal + "]";
 	}
@@ -103,6 +128,55 @@ public:
 	Identifier (char *tableNameIn, char *attNameIn) {
 		tableName = string (tableNameIn);
 		attName = string (attNameIn);
+	}
+
+	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
+		// look up the tableName value (an alias) in "tablesToProcess" to get the actual table name
+		string actualTableName;
+
+		bool foundAlias = false;
+		for (pair<string, string> p : tablesToProcess) {
+			if (p.second == tableName) {  // match alias
+				actualTableName = p.first;
+				foundAlias = true;
+				break;
+			}
+		}
+
+		if (!foundAlias) {
+			cout << "ERROR: Table alias '" << tableName << "' not found in query." << endl;
+			return errType;
+    	}
+
+		// look up the table name in allTables, and use that to look up the type of attName
+		auto tableIt = allTables.find(actualTableName);
+		if (tableIt == allTables.end()) {
+			cout << "ERROR: Table '" << actualTableName << "' not found in catalog." << endl;
+			return errType;
+		}
+
+		MyDB_TablePtr table = tableIt->second;
+		MyDB_SchemaPtr schema = table->getSchema();
+
+		// Look up attribute in schema
+		pair<int, MyDB_AttTypePtr> attInfo = schema->getAttByName(attName);
+		if (attInfo.first == -1) {
+			cout << "ERROR: Attribute '" << attName << "' not found in table '" 
+				<< actualTableName << "'." << endl;
+			return errType;
+		}
+
+		MyDB_AttTypePtr attType = attInfo.second;
+
+		// Map MyDB_AttTypePtr to ReturnType
+		// Not sure what to return for boolType
+		if (attType->isBool()) return intType;      
+		string typeStr = attType->toString();
+		if (typeStr == "int") return intType;
+		if (typeStr == "double") return doubleType;
+		if (typeStr == "string") return stringType;
+
+		return errType;
 	}
 
 	string toString () {
@@ -145,6 +219,23 @@ public:
 	PlusOp (ExprTreePtr lhsIn, ExprTreePtr rhsIn) {
 		lhs = lhsIn;
 		rhs = rhsIn;
+	}
+
+	ReturnType typeCheck(map<std::string, MyDB_TablePtr> &allTables, vector<std::pair<std::string, std::string>> &tablesToProcess) {
+		ReturnType leftType = lhs->typeCheck (allTables, tablesToProcess);
+		ReturnType rightType = rhs->typeCheck (allTables, tablesToProcess);
+
+		// the only way a + returns an error is if the left subexpression or right subexpression returns an error
+		if (leftType == errType || rightType == errType)
+			return errType;
+		
+		if (leftType == stringType || rightType == stringType) 
+			return stringType;
+
+		if (leftType == intType && rightType == intType)
+			return intType;
+
+		return doubleType;
 	}
 
 	string toString () {

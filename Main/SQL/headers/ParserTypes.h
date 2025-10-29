@@ -233,8 +233,10 @@ public:
 		allDisjunctions.push_back (make_shared <BoolLiteral> (true));
 	}
 
-	int checkTablesExist(map <string, MyDB_TablePtr> allTables) {
+	int checkTablesExist(map <string, MyDB_TablePtr> &allTables) {
 		for (pair<string, string> a : tablesToProcess) {
+			cout << "a.first: " << a.first << endl;
+			cout << "a.second: " << a.second << endl;
 			if (allTables.find(a.first) == allTables.end()) {
 				// table doesn't exist in all tables
 				cout << "ERROR: Table " << a.first << " doesn't exist in the catalog " << endl;
@@ -311,8 +313,7 @@ public:
 		myQuery.print ();
 	}
 
-	int checkTablesExist(map <string, MyDB_TablePtr> allTables) {
-		cout << "Checking tables exist in ParserTypes" << endl;
+	int checkTablesExist(map <string, MyDB_TablePtr> &allTables) {
 		return myQuery.checkTablesExist(allTables);
 	}
 
