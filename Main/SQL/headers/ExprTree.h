@@ -13,7 +13,7 @@ using namespace std;
 class ExprTree;
 typedef shared_ptr <ExprTree> ExprTreePtr;
 
-enum ReturnType { stringType, intType, doubleType, errType };
+enum ReturnType { stringType, intType, doubleType, boolType, errType };
 
 // this class encapsules a parsed SQL expression (such as "this.that > 34.5 AND 4 = 5")
 
@@ -40,8 +40,7 @@ public:
 	}
 
 	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
-        // Not sure if should treat this as interger;
-        return intType;
+        return boolType;
     }
 
 	string toString () {
@@ -170,7 +169,7 @@ public:
 
 		// Map MyDB_AttTypePtr to ReturnType
 		// Not sure what to return for boolType
-		if (attType->isBool()) return intType;      
+		if (attType->isBool()) return boolType;      
 		string typeStr = attType->toString();
 		if (typeStr == "int") return intType;
 		if (typeStr == "double") return doubleType;
@@ -212,6 +211,11 @@ public:
 			return errType;
 		}
 
+		if (leftType == boolType || rightType == boolType) {
+			cout << "ERROR: Cannot subtract bool values." << endl;
+			return errType;
+		}
+
 		if (leftType == intType && rightType == intType)
 			return intType;
 
@@ -249,6 +253,11 @@ public:
 		
 		if (leftType == stringType || rightType == stringType) 
 			return stringType;
+	
+		if (leftType == boolType || rightType == boolType) {
+			cout << "ERROR: Cannot add bool values." << endl;
+			return errType;
+		}
 
 		if (leftType == intType && rightType == intType)
 			return intType;
@@ -289,6 +298,11 @@ public:
 			return errType;
 		}
 
+		if (leftType == boolType || rightType == boolType) {
+			cout << "ERROR: Cannot multiply bool values." << endl;
+			return errType;
+		}
+
 		if (leftType == intType && rightType == intType)
 			return intType;
 
@@ -325,6 +339,11 @@ public:
 
 		if (leftType == stringType || rightType == stringType) {
 			cout << "ERROR: Cannot divide string values." << endl;
+			return errType;
+		}
+
+		if (leftType == boolType || rightType == boolType) {
+			cout << "ERROR: Cannot divide bool values." << endl;
 			return errType;
 		}
 
@@ -368,13 +387,13 @@ public:
 				return errType;
 			}
 
-			return intType;
+			return boolType;
 		}
 
 		// Allow numeric comparisons (int/double)
 		if ((leftType == intType || leftType == doubleType) &&
 			(rightType == intType || rightType == doubleType)) {
-			return intType;
+			return boolType;
 		}
 
 		// Anything else is invalid (e.g., bool)
@@ -420,13 +439,13 @@ public:
 				return errType;
 			}
 
-			return intType;
+			return boolType;
 		}
 
 		// Allow numeric comparisons (int/double)
 		if ((leftType == intType || leftType == doubleType) &&
 			(rightType == intType || rightType == doubleType)) {
-			return intType;
+			return boolType;
 		}
 
 		// Anything else is invalid (e.g., bool)
@@ -472,13 +491,13 @@ public:
 				return errType;
 			}
 
-			return intType;
+			return boolType;
 		}
 
 		// Allow numeric comparisons (int/double)
 		if ((leftType == intType || leftType == doubleType) &&
 			(rightType == intType || rightType == doubleType)) {
-			return intType;
+			return boolType;
 		}
 
 		// Anything else is invalid (e.g., bool)
@@ -506,6 +525,21 @@ public:
 	OrOp (ExprTreePtr lhsIn, ExprTreePtr rhsIn) {
 		lhs = lhsIn;
 		rhs = rhsIn;
+	}
+
+	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
+		ReturnType leftType = lhs->typeCheck(allTables, tablesToProcess);
+    	ReturnType rightType = rhs->typeCheck(allTables, tablesToProcess);
+
+		if (leftType == errType || rightType == errType)
+        	return errType;
+
+		if (leftType != boolType || rightType != boolType) {
+        	cout << "ERROR: OR operator requires boolean operands, but got " << leftType << " and " << rightType << "." << endl;
+        	return errType;
+    	}
+
+		return boolType;
 	}
 
 	string toString () {
@@ -545,13 +579,13 @@ public:
 				return errType;
 			}
 
-			return intType;
+			return boolType;
 		}
 
 		// Allow numeric comparisons (int/double)
 		if ((leftType == intType || leftType == doubleType) &&
 			(rightType == intType || rightType == doubleType)) {
-			return intType;
+			return boolType;
 		}
 
 		// Anything else is invalid (e.g., bool)
@@ -579,6 +613,22 @@ public:
 		child = childIn;
 	}
 
+	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
+		ReturnType childType = child->typeCheck(allTables, tablesToProcess);
+
+        if (childType == errType) 
+            return errType;
+
+        // Must be boolean
+        if (childType != boolType) {
+            cout << "ERROR: NOT operator requires a boolean expression, but got type "
+                 << childType << endl;
+            return errType;
+        }
+
+        return boolType;
+	}
+
 	string toString () {
 		return "!(" + child->toString () + ")";
 	}	
@@ -598,6 +648,22 @@ public:
 		child = childIn;
 	}
 
+	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
+		ReturnType childType = child->typeCheck(allTables, tablesToProcess);
+
+		if (childType == errType)
+        	return errType;
+
+		// SUM cannot apply to strings or bools
+		if (childType == stringType || childType == boolType) {
+			cout << "ERROR: Cannot apply SUM to non-numeric attribute: " << child->toString() << endl;
+			return errType;
+		}
+
+		// Child type should be int or double
+		return childType;
+	}
+
 	string toString () {
 		return "sum(" + child->toString () + ")";
 	}	
@@ -615,6 +681,22 @@ public:
 
 	AvgOp (ExprTreePtr childIn) {
 		child = childIn;
+	}
+
+	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
+		ReturnType childType = child->typeCheck(allTables, tablesToProcess);
+
+		if (childType == errType)
+        	return errType;
+
+		// AVG cannot apply to strings or bools
+		if (childType == stringType || childType == boolType) {
+			cout << "ERROR: Cannot apply AVG to non-numeric attribute: " << child->toString() << endl;
+			return errType;
+		}
+
+		// AVG should always return double
+		return doubleType;
 	}
 
 	string toString () {
