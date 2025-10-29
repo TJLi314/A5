@@ -232,6 +232,18 @@ public:
 		tablesToProcess = fromClause->aliases;
 		allDisjunctions.push_back (make_shared <BoolLiteral> (true));
 	}
+
+	int checkTablesExist(map <string, MyDB_TablePtr> allTables) {
+		for (pair<string, string> a : tablesToProcess) {
+			if (allTables.find(a.first) == allTables.end()) {
+				// table doesn't exist in all tables
+				cout << "ERROR: Table " << a.first << " doesn't exist in the catalog " << endl;
+				return -1;
+			}
+		}
+
+		return 0;
+	}
 	
 	~SFWQuery () {}
 
@@ -297,6 +309,11 @@ public:
 	
 	void printSFWQuery () {
 		myQuery.print ();
+	}
+
+	int checkTablesExist(map <string, MyDB_TablePtr> allTables) {
+		cout << "Checking tables exist in ParserTypes" << endl;
+		return myQuery.checkTablesExist(allTables);
 	}
 
 	#include "FriendDecls.h"

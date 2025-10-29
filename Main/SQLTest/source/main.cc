@@ -68,7 +68,7 @@ int main (int numArgs, char **args) {
 			// see if it has a ";" at the end
 			size_t pos = line.find (';');
 
-			// it does!!  so we are ready yo parse
+			// it does!!  so we are ready to parse
 			if (pos != string :: npos) {
 
 				// append the last line
@@ -126,6 +126,12 @@ int main (int numArgs, char **args) {
 				const int parseFailed { yyparse (scanner, &final) };
 				yy_delete_buffer (buffer, scanner);
 				yylex_destroy (scanner);
+
+				// Semantic checking on SQLStatement
+				int semanticsFailed = final->checkTablesExist(allTables);
+				if (semanticsFailed == -1) {
+					break;
+				}
 
 				// if we did not parse correctly
 				if (parseFailed) {
