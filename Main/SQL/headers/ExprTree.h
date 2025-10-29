@@ -200,6 +200,24 @@ public:
 		rhs = rhsIn;
 	}
 
+	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
+		ReturnType leftType = lhs->typeCheck(allTables, tablesToProcess);
+		ReturnType rightType = rhs->typeCheck(allTables, tablesToProcess);
+
+		if (leftType == errType || rightType == errType)
+			return errType;
+
+		if (leftType == stringType || rightType == stringType) {
+			cout << "ERROR: Cannot subtract string values." << endl;
+			return errType;
+		}
+
+		if (leftType == intType && rightType == intType)
+			return intType;
+
+		return doubleType;
+	}
+
 	string toString () {
 		return "- (" + lhs->toString () + ", " + rhs->toString () + ")";
 	}	
@@ -259,6 +277,24 @@ public:
 		rhs = rhsIn;
 	}
 
+	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
+		ReturnType leftType = lhs->typeCheck(allTables, tablesToProcess);
+		ReturnType rightType = rhs->typeCheck(allTables, tablesToProcess);
+
+		if (leftType == errType || rightType == errType)
+			return errType;
+
+		if (leftType == stringType || rightType == stringType) {
+			cout << "ERROR: Cannot multiply string values." << endl;
+			return errType;
+		}
+
+		if (leftType == intType && rightType == intType)
+			return intType;
+
+		return doubleType;
+	}
+
 	string toString () {
 		return "* (" + lhs->toString () + ", " + rhs->toString () + ")";
 	}	
@@ -278,6 +314,21 @@ public:
 	DivideOp (ExprTreePtr lhsIn, ExprTreePtr rhsIn) {
 		lhs = lhsIn;
 		rhs = rhsIn;
+	}
+
+	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
+		ReturnType leftType = lhs->typeCheck(allTables, tablesToProcess);
+		ReturnType rightType = rhs->typeCheck(allTables, tablesToProcess);
+
+		if (leftType == errType || rightType == errType)
+			return errType;
+
+		if (leftType == stringType || rightType == stringType) {
+			cout << "ERROR: Cannot divide string values." << endl;
+			return errType;
+		}
+
+		return doubleType;
 	}
 
 	string toString () {
@@ -301,6 +352,37 @@ public:
 		rhs = rhsIn;
 	}
 
+	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
+		ReturnType leftType = lhs->typeCheck(allTables, tablesToProcess);
+		ReturnType rightType = rhs->typeCheck(allTables, tablesToProcess);
+
+		// Propagate errors from subexpressions
+		if (leftType == errType || rightType == errType)
+			return errType;
+
+		// Allow string comparisons only with string
+		if (leftType == stringType || rightType == stringType) {
+			if (leftType != rightType) {
+				cout << "ERROR: Cannot compare incompatible types: "
+					<< "left=" << leftType << ", right=" << rightType << endl;
+				return errType;
+			}
+
+			return intType;
+		}
+
+		// Allow numeric comparisons (int/double)
+		if ((leftType == intType || leftType == doubleType) &&
+			(rightType == intType || rightType == doubleType)) {
+			return intType;
+		}
+
+		// Anything else is invalid (e.g., bool)
+		cout << "ERROR: Cannot compare incompatible types: "
+			<< "left=" << leftType << ", right=" << rightType << endl;
+		return errType;
+	}
+
 	string toString () {
 		return "> (" + lhs->toString () + ", " + rhs->toString () + ")";
 	}	
@@ -322,6 +404,37 @@ public:
 		rhs = rhsIn;
 	}
 
+	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
+		ReturnType leftType = lhs->typeCheck(allTables, tablesToProcess);
+		ReturnType rightType = rhs->typeCheck(allTables, tablesToProcess);
+
+		// Propagate errors from subexpressions
+		if (leftType == errType || rightType == errType)
+			return errType;
+
+		// Allow string comparisons only with string
+		if (leftType == stringType || rightType == stringType) {
+			if (leftType != rightType) {
+				cout << "ERROR: Cannot compare incompatible types: "
+					<< "left=" << leftType << ", right=" << rightType << endl;
+				return errType;
+			}
+
+			return intType;
+		}
+
+		// Allow numeric comparisons (int/double)
+		if ((leftType == intType || leftType == doubleType) &&
+			(rightType == intType || rightType == doubleType)) {
+			return intType;
+		}
+
+		// Anything else is invalid (e.g., bool)
+		cout << "ERROR: Cannot compare incompatible types: "
+			<< "left=" << leftType << ", right=" << rightType << endl;
+		return errType;
+	}
+
 	string toString () {
 		return "< (" + lhs->toString () + ", " + rhs->toString () + ")";
 	}	
@@ -341,6 +454,37 @@ public:
 	NeqOp (ExprTreePtr lhsIn, ExprTreePtr rhsIn) {
 		lhs = lhsIn;
 		rhs = rhsIn;
+	}
+
+	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
+		ReturnType leftType = lhs->typeCheck(allTables, tablesToProcess);
+		ReturnType rightType = rhs->typeCheck(allTables, tablesToProcess);
+
+		// Propagate errors from subexpressions
+		if (leftType == errType || rightType == errType)
+			return errType;
+
+		// Allow string comparisons only with string
+		if (leftType == stringType || rightType == stringType) {
+			if (leftType != rightType) {
+				cout << "ERROR: Cannot compare incompatible types: "
+					<< "left=" << leftType << ", right=" << rightType << endl;
+				return errType;
+			}
+
+			return intType;
+		}
+
+		// Allow numeric comparisons (int/double)
+		if ((leftType == intType || leftType == doubleType) &&
+			(rightType == intType || rightType == doubleType)) {
+			return intType;
+		}
+
+		// Anything else is invalid (e.g., bool)
+		cout << "ERROR: Cannot compare incompatible types: "
+			<< "left=" << leftType << ", right=" << rightType << endl;
+		return errType;
 	}
 
 	string toString () {
@@ -383,6 +527,37 @@ public:
 	EqOp (ExprTreePtr lhsIn, ExprTreePtr rhsIn) {
 		lhs = lhsIn;
 		rhs = rhsIn;
+	}
+
+	ReturnType typeCheck(map<string, MyDB_TablePtr> &allTables, vector<pair<string, string>> &tablesToProcess) override {
+		ReturnType leftType = lhs->typeCheck(allTables, tablesToProcess);
+		ReturnType rightType = rhs->typeCheck(allTables, tablesToProcess);
+
+		// Propagate errors from subexpressions
+		if (leftType == errType || rightType == errType)
+			return errType;
+
+		// Allow string comparisons only with string
+		if (leftType == stringType || rightType == stringType) {
+			if (leftType != rightType) {
+				cout << "ERROR: Cannot compare incompatible types: "
+					<< "left=" << leftType << ", right=" << rightType << endl;
+				return errType;
+			}
+
+			return intType;
+		}
+
+		// Allow numeric comparisons (int/double)
+		if ((leftType == intType || leftType == doubleType) &&
+			(rightType == intType || rightType == doubleType)) {
+			return intType;
+		}
+
+		// Anything else is invalid (e.g., bool)
+		cout << "ERROR: Cannot compare incompatible types: "
+			<< "left=" << leftType << ", right=" << rightType << endl;
+		return errType;
 	}
 
 	string toString () {
