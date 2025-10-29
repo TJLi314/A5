@@ -245,31 +245,31 @@ public:
 		return 0;
 	}
 
-    string checkValuesToSelect(map <string, MyDB_TablePtr> &allTables) {
+    int checkValuesToSelect(map <string, MyDB_TablePtr> &allTables) {
         for (ExprTreePtr expr : valuesToSelect) {
             if (expr->typeCheck(allTables, tablesToProcess) == errType) {
-                return "Semantic error in expression: " + expr->toString();
+                return -1;
             }
         }
-        return "";
+        return 0;
     }
 
-    string checkAllDisjunctions(map <string, MyDB_TablePtr> &allTables) {
+    int checkAllDisjunctions(map <string, MyDB_TablePtr> &allTables) {
         for (ExprTreePtr expr : allDisjunctions) {
             if (expr->typeCheck(allTables, tablesToProcess) == errType) {
-                return "Semantic error in expression: " + expr->toString();
+                return -1;
             }
         }
-        return "";
+        return 0;
     }
 
-    string checkGroupingClauses(map <string, MyDB_TablePtr> &allTables) {
+    int checkGroupingClauses(map <string, MyDB_TablePtr> &allTables) {
         for (ExprTreePtr expr : groupingClauses) {
             if (expr->typeCheck(allTables, tablesToProcess) == errType) {
-                return "Semantic error in expression: " + expr->toString();
+                return -1;
             }
         }
-        return "";
+        return 0;
     }
 
 	
@@ -343,22 +343,19 @@ public:
 		return myQuery.checkTablesExist(allTables);
 	}
 
-    string checkSemantics(map <string, MyDB_TablePtr> &allTables) {
+    int checkSemantics(map <string, MyDB_TablePtr> &allTables) {
         // Check that all identifiers in valuesToSelect, allDisjunctions, groupingClauses are valid
         // i.e., the table aliases exist and the attributes exist in the corresponding tables
-        string msg = myQuery.checkValuesToSelect(allTables);
-        if (msg != "") {
-            return msg;
+        if (myQuery.checkValuesToSelect(allTables)) {
+            return -1;
         }
-        msg = myQuery.checkAllDisjunctions(allTables);
-        if (msg != "") {
-            return msg;
+        if (myQuery.checkAllDisjunctions(allTables)) {
+            return -1;
         }
-        msg = myQuery.checkGroupingClauses(allTables);
-        if (msg != "") {
-            return msg;
+        if (myQuery.checkGroupingClauses(allTables)) {
+            return -1;
         }
-        return "Semantic check passed.";
+        return 0;
     }
 
 	#include "FriendDecls.h"

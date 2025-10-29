@@ -165,7 +165,11 @@ int main (int numArgs, char **args) {
                         if (semanticsFailed == -1) {
                             break;
                         }
-                        string msg = final->checkSemantics(allTables);
+                        int res = final->checkSemantics(allTables);
+                        if (res == -1) {
+                            cout << "Semantic check failed.\n";
+                            break;
+                        }
 						// print it out
 						final->printSFWQuery ();
 					}
