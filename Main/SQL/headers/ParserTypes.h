@@ -10,6 +10,7 @@
 #include "MyDB_Table.h"
 #include <string>
 #include <utility>
+#include <set>
 
 using namespace std;
 
@@ -273,40 +274,50 @@ public:
     }
 
     int checkValuesToSelectAgainstGroupings(map <string, MyDB_TablePtr> &allTables) {
-        vector<ExprTreePtr> selectIdentifiers = vector<ExprTreePtr>();
-        for (auto expr : valuesToSelect) {
-            vector<ExprTreePtr> ids = expr->getIdentifiers(allTables);
-            for (auto id : ids) {
-                selectIdentifiers.push_back(id);
-            }
-        }
-        cout << "successfully got select identifiers\n";
-        vector<ExprTreePtr> groupingIdentifiers = vector<ExprTreePtr>();
-        for (auto expr : groupingClauses) {
-            vector<ExprTreePtr> ids = expr->getIdentifiers(allTables);
-            for (auto id : ids) {
-                groupingIdentifiers.push_back(id);
-            }
-        }
-        cout << "successfully got grouping identifiers\n";
+		std::set<std::pair<string,string>> groupingAtts;
 
-        for (ExprTreePtr selectId : selectIdentifiers) {
-            bool found = false;
-            for (ExprTreePtr groupId : groupingIdentifiers) {
-                if (selectId->toString() == groupId->toString()) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                cout << "ERROR: Selected attribute " << selectId->toString() 
-                     << " is not in GROUP BY clause." << endl;
-                return -1;
-            }
-        }
+		for (ExprTreePtr expr : groupingClauses) {
+			std::set<std::pair<string,string>> temp;
+			expr->getReferencedAttributes(temp);
+			groupingAtts.insert(temp.begin(), temp.end());
+		}
 
-        return 0;
-    }
+		cout << "Grouping attributes:" << endl;
+		for (const auto &p : groupingAtts) {
+			cout << "   (" << p.first << ", " << p.second << ")" << endl;
+		}
+
+		// Now check selected values
+		for (ExprTreePtr expr : valuesToSelect) {
+
+			// If this expression contains an aggregate, it's allowed
+			if (expr->isAggregate()) {
+				cout << "Current expression is an aggregate. It's allowed. Skipping" << endl;
+				continue;
+			}
+
+			// Otherwise, its referenced attributes must be subset of groupingAtts
+			std::set<std::pair<string,string>> referenced;
+			expr->getReferencedAttributes(referenced);
+
+			cout << "Referenced attributes in SELECT expression: ";
+			for (auto &att : referenced) {
+				cout << "(" << att.first << ", " << att.second << ") ";
+			}
+			cout << endl;
+
+			for (auto &att : referenced) {
+				if (groupingAtts.count(att) == 0) {
+					cout << "ERROR: Non-aggregated expression in SELECT uses attribute "
+						<< att.first << "." << att.second 
+						<< " which is not in GROUP BY." << endl;
+					return -1;
+				}
+			}
+		}
+
+		return 0;
+	}
 
 	
 	~SFWQuery () {}

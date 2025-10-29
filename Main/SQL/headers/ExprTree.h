@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 
 // create a smart pointer for database tables
 using namespace std;
@@ -39,9 +40,11 @@ public:
     ) = 0;
 	virtual ~ExprTree () {}
 
-    virtual vector<ExprTreePtr> getIdentifiers(map<std::string, MyDB_TablePtr> &allTables) {
-        return vector<ExprTreePtr>();
-    }
+	virtual bool isAggregate() { return false; }
+
+	virtual void getReferencedAttributes(std::set<std::pair<string,string>> &atts) {
+		// Default: this expression refers to no attributes.
+	}
 };
 
 class BoolLiteral : public ExprTree {
@@ -197,9 +200,9 @@ public:
 		return "[" + tableName + "_" + attName + "]";
 	}	
 
-    vector<ExprTreePtr> getIdentifiers(map<std::string, MyDB_TablePtr> &allTables) override {
-        return vector<ExprTreePtr>{ make_shared<Identifier>(tableName, attName) };
-    }
+	void getReferencedAttributes(std::set<std::pair<string,string>> &atts) override {
+		atts.insert({tableName, attName});
+	}
 
 	~Identifier () {}
 };
@@ -241,18 +244,14 @@ public:
 		return doubleType;
 	}
 
-    vector<ExprTreePtr> getIdentifiers(map<std::string, MyDB_TablePtr> &allTables) override {
-        vector<ExprTreePtr> ids = vector<ExprTreePtr>();
-        vector<ExprTreePtr> leftIds = lhs->getIdentifiers(allTables);
-        vector<ExprTreePtr> rightIds = rhs->getIdentifiers(allTables);
-        for (auto id : leftIds) {
-            ids.push_back(id);
-        }
-        for (auto id : rightIds) {
-            ids.push_back(id);
-        }
-        return ids;
-    }
+	bool isAggregate() override {
+		return lhs->isAggregate() || rhs->isAggregate();
+	}
+
+	void getReferencedAttributes(std::set<std::pair<string,string>> &atts) override {
+		lhs->getReferencedAttributes(atts);
+		rhs->getReferencedAttributes(atts);
+	}
 
 	string toString () {
 		return "- (" + lhs->toString () + ", " + rhs->toString () + ")";
@@ -298,18 +297,14 @@ public:
 	}
 
 
-    vector<ExprTreePtr> getIdentifiers(map<std::string, MyDB_TablePtr> &allTables) override {
-        vector<ExprTreePtr> ids = vector<ExprTreePtr>();
-        vector<ExprTreePtr> leftIds = lhs->getIdentifiers(allTables);
-        vector<ExprTreePtr> rightIds = rhs->getIdentifiers(allTables);
-        for (auto id : leftIds) {
-            ids.push_back(id);
-        }
-        for (auto id : rightIds) {
-            ids.push_back(id);
-        }
-        return ids;
-    }
+	void getReferencedAttributes(std::set<std::pair<string,string>> &atts) override {
+		lhs->getReferencedAttributes(atts);
+		rhs->getReferencedAttributes(atts);
+	}
+
+	bool isAggregate() override {
+		return lhs->isAggregate() || rhs->isAggregate();
+	}
 
 	string toString () {
 		return "+ (" + lhs->toString () + ", " + rhs->toString () + ")";
@@ -355,19 +350,14 @@ public:
 		return doubleType;
 	}
 
+	bool isAggregate() override {
+		return lhs->isAggregate() || rhs->isAggregate();
+	}
 
-    vector<ExprTreePtr> getIdentifiers(map<std::string, MyDB_TablePtr> &allTables) override {
-        vector<ExprTreePtr> ids = vector<ExprTreePtr>();
-        vector<ExprTreePtr> leftIds = lhs->getIdentifiers(allTables);
-        vector<ExprTreePtr> rightIds = rhs->getIdentifiers(allTables);
-        for (auto id : leftIds) {
-            ids.push_back(id);
-        }
-        for (auto id : rightIds) {
-            ids.push_back(id);
-        }
-        return ids;
-    }
+	void getReferencedAttributes(std::set<std::pair<string,string>> &atts) override {
+		lhs->getReferencedAttributes(atts);
+		rhs->getReferencedAttributes(atts);
+	}
 
 	string toString () {
 		return "* (" + lhs->toString () + ", " + rhs->toString () + ")";
@@ -410,19 +400,14 @@ public:
 		return doubleType;
 	}
 
+	void getReferencedAttributes(std::set<std::pair<string,string>> &atts) override {
+		lhs->getReferencedAttributes(atts);
+		rhs->getReferencedAttributes(atts);
+	}
 
-    vector<ExprTreePtr> getIdentifiers(map<std::string, MyDB_TablePtr> &allTables) override {
-        vector<ExprTreePtr> ids = vector<ExprTreePtr>();
-        vector<ExprTreePtr> leftIds = lhs->getIdentifiers(allTables);
-        vector<ExprTreePtr> rightIds = rhs->getIdentifiers(allTables);
-        for (auto id : leftIds) {
-            ids.push_back(id);
-        }
-        for (auto id : rightIds) {
-            ids.push_back(id);
-        }
-        return ids;
-    }
+	bool isAggregate() override {
+		return lhs->isAggregate() || rhs->isAggregate();
+	}
 
 	string toString () {
 		return "/ (" + lhs->toString () + ", " + rhs->toString () + ")";
@@ -738,6 +723,8 @@ public:
 		return childType;
 	}
 
+	bool isAggregate() override { return true; }
+
 	string toString () {
 		return "sum(" + child->toString () + ")";
 	}	
@@ -772,6 +759,8 @@ public:
 		// AVG should always return double
 		return doubleType;
 	}
+
+	bool isAggregate() override { return true; }
 
 	string toString () {
 		return "avg(" + child->toString () + ")";
