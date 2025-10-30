@@ -179,7 +179,7 @@ public:
 		pair<int, MyDB_AttTypePtr> attInfo = schema->getAttByName(attName);
 		if (attInfo.first == -1) {
 			cout << "ERROR: Attribute '" << attName << "' not found in table '" 
-				<< actualTableName << endl;
+				<< actualTableName << "'" << endl;
 			return errType;
 		}
 

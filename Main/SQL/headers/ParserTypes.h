@@ -276,15 +276,14 @@ public:
     int checkValuesToSelectAgainstGroupings(map <string, MyDB_TablePtr> &allTables) {
 		std::set<std::pair<string,string>> groupingAtts;
 
+        if (groupingClauses.empty()) {
+            return 0;
+        }
+
 		for (ExprTreePtr expr : groupingClauses) {
 			std::set<std::pair<string,string>> temp;
 			expr->getReferencedAttributes(temp);
 			groupingAtts.insert(temp.begin(), temp.end());
-		}
-
-		cout << "Grouping attributes:" << endl;
-		for (const auto &p : groupingAtts) {
-			cout << "   (" << p.first << ", " << p.second << ")" << endl;
 		}
 
 		// Now check selected values
@@ -292,19 +291,12 @@ public:
 
 			// If this expression contains an aggregate, it's allowed
 			if (expr->isAggregate()) {
-				cout << "Current expression is an aggregate. It's allowed. Skipping" << endl;
 				continue;
 			}
 
 			// Otherwise, its referenced attributes must be subset of groupingAtts
 			std::set<std::pair<string,string>> referenced;
 			expr->getReferencedAttributes(referenced);
-
-			cout << "Referenced attributes in SELECT expression: ";
-			for (auto &att : referenced) {
-				cout << "(" << att.first << ", " << att.second << ") ";
-			}
-			cout << endl;
 
 			for (auto &att : referenced) {
 				if (groupingAtts.count(att) == 0) {
@@ -402,7 +394,6 @@ public:
         if (myQuery.checkGroupingClauses(allTables) == -1) {
             return -1;
         }
-        cout << "All identifiers are valid.\n";
         if (myQuery.checkValuesToSelectAgainstGroupings(allTables) == -1) {
             return -1;
         }

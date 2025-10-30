@@ -171,7 +171,7 @@ int main (int numArgs, char **args) {
                         }
 						cout << "Semantic check succeeded!\n";
 						// print it out
-						final->printSFWQuery ();
+						// final->printSFWQuery ();
 					}
 
 					// get outta here
