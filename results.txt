@@ -1,0 +1,17 @@
+Test 1: Semantic check succeeded!
+Test 2: ERROR: Non-aggregated expression in SELECT uses attribute s.s_suppkey which is not in GROUP BY.
+Test 3: ERROR: Cannot compare incompatible types: left=double, right=string
+Test 4: ERROR: Cannot apply SUM to non-numeric attribute: + ([l_l_returnflag], + ([l_l_shipdate], [l_l_commitdate]))
+Test 5: Semantic check succeeded!
+Test 6: ERROR: Cannot compare incompatible types: left=double, right=string
+Test 7: ERROR: Attribute 'k_orderkey' not found in table 'orders'
+Test 8: ERROR: Table alias 'h' not found in query
+Test 9: ERROR: Cannot subtract string values
+Test 10: ERROR: Table customers doesn't exist in the catalog 
+Test 11: Semantic check succeeded!
+Test 12: Semantic check succeeded!
+Test 13: ERROR: Attribute 'l_extendedprice' not found in table 'customer'
+Test 14: Semantic check succeeded!
+Test 15: ERROR: Cannot compare incompatible types: left=double, right=string 
+Test 16: Semantic check succeeded!
+Test 17: Semantic check succeeded!

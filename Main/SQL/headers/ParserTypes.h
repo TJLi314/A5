@@ -10,6 +10,7 @@
 #include "MyDB_Table.h"
 #include <string>
 #include <utility>
+#include <set>
 
 using namespace std;
 
@@ -272,6 +273,44 @@ public:
         return 0;
     }
 
+    int checkValuesToSelectAgainstGroupings(map <string, MyDB_TablePtr> &allTables) {
+		std::set<std::pair<string,string>> groupingAtts;
+
+        if (groupingClauses.empty()) {
+            return 0;
+        }
+
+		for (ExprTreePtr expr : groupingClauses) {
+			std::set<std::pair<string,string>> temp;
+			expr->getReferencedAttributes(temp);
+			groupingAtts.insert(temp.begin(), temp.end());
+		}
+
+		// Now check selected values
+		for (ExprTreePtr expr : valuesToSelect) {
+
+			// If this expression contains an aggregate, it's allowed
+			if (expr->isAggregate()) {
+				continue;
+			}
+
+			// Otherwise, its referenced attributes must be subset of groupingAtts
+			std::set<std::pair<string,string>> referenced;
+			expr->getReferencedAttributes(referenced);
+
+			for (auto &att : referenced) {
+				if (groupingAtts.count(att) == 0) {
+					cout << "ERROR: Non-aggregated expression in SELECT uses attribute "
+						<< att.first << "." << att.second 
+						<< " which is not in GROUP BY." << endl;
+					return -1;
+				}
+			}
+		}
+
+		return 0;
+	}
+
 	
 	~SFWQuery () {}
 
@@ -353,6 +392,9 @@ public:
             return -1;
         }
         if (myQuery.checkGroupingClauses(allTables) == -1) {
+            return -1;
+        }
+        if (myQuery.checkValuesToSelectAgainstGroupings(allTables) == -1) {
             return -1;
         }
         return 0;

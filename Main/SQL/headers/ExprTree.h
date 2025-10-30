@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 
 // create a smart pointer for database tables
 using namespace std;
@@ -38,6 +39,12 @@ public:
         vector<std::pair<std::string, std::string>> &tablesToProcess
     ) = 0;
 	virtual ~ExprTree () {}
+
+	virtual bool isAggregate() { return false; }
+
+	virtual void getReferencedAttributes(std::set<std::pair<string,string>> &atts) {
+		// Default: this expression refers to no attributes.
+	}
 };
 
 class BoolLiteral : public ExprTree {
@@ -172,7 +179,7 @@ public:
 		pair<int, MyDB_AttTypePtr> attInfo = schema->getAttByName(attName);
 		if (attInfo.first == -1) {
 			cout << "ERROR: Attribute '" << attName << "' not found in table '" 
-				<< actualTableName << endl;
+				<< actualTableName << "'" << endl;
 			return errType;
 		}
 
@@ -192,6 +199,10 @@ public:
 	string toString () {
 		return "[" + tableName + "_" + attName + "]";
 	}	
+
+	void getReferencedAttributes(std::set<std::pair<string,string>> &atts) override {
+		atts.insert({tableName, attName});
+	}
 
 	~Identifier () {}
 };
@@ -231,6 +242,15 @@ public:
 			return intType;
 
 		return doubleType;
+	}
+
+	bool isAggregate() override {
+		return lhs->isAggregate() || rhs->isAggregate();
+	}
+
+	void getReferencedAttributes(std::set<std::pair<string,string>> &atts) override {
+		lhs->getReferencedAttributes(atts);
+		rhs->getReferencedAttributes(atts);
 	}
 
 	string toString () {
@@ -274,6 +294,16 @@ public:
 			return intType;
 
 		return doubleType;
+	}
+
+
+	void getReferencedAttributes(std::set<std::pair<string,string>> &atts) override {
+		lhs->getReferencedAttributes(atts);
+		rhs->getReferencedAttributes(atts);
+	}
+
+	bool isAggregate() override {
+		return lhs->isAggregate() || rhs->isAggregate();
 	}
 
 	string toString () {
@@ -320,6 +350,15 @@ public:
 		return doubleType;
 	}
 
+	bool isAggregate() override {
+		return lhs->isAggregate() || rhs->isAggregate();
+	}
+
+	void getReferencedAttributes(std::set<std::pair<string,string>> &atts) override {
+		lhs->getReferencedAttributes(atts);
+		rhs->getReferencedAttributes(atts);
+	}
+
 	string toString () {
 		return "* (" + lhs->toString () + ", " + rhs->toString () + ")";
 	}	
@@ -359,6 +398,15 @@ public:
 		}
 
 		return doubleType;
+	}
+
+	void getReferencedAttributes(std::set<std::pair<string,string>> &atts) override {
+		lhs->getReferencedAttributes(atts);
+		rhs->getReferencedAttributes(atts);
+	}
+
+	bool isAggregate() override {
+		return lhs->isAggregate() || rhs->isAggregate();
 	}
 
 	string toString () {
@@ -675,6 +723,8 @@ public:
 		return childType;
 	}
 
+	bool isAggregate() override { return true; }
+
 	string toString () {
 		return "sum(" + child->toString () + ")";
 	}	
@@ -709,6 +759,8 @@ public:
 		// AVG should always return double
 		return doubleType;
 	}
+
+	bool isAggregate() override { return true; }
 
 	string toString () {
 		return "avg(" + child->toString () + ")";
